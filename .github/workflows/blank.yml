@@ -4,7 +4,6 @@ on: [push, workflow_dispatch]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -12,6 +11,19 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y xrdp
+
+    - name: Enable xrdp Service
+      run: |
+        sudo systemctl enable xrdp
+        sudo systemctl start xrdp
+
+    - name: Enable Remote Desktop Firewall
+      run: |
+        sudo ufw allow 3389/tcp || sudo apt-get install ufw -y && sudo ufw enable && sudo ufw allow 3389/tcp
+
+    - name: Set xrdp User Password
+      run: |
+        sudo usermod -p $(echo 'P@ssw0rd!' | openssl passwd -1 -stdin) $USER
 
     - name: Setup Ngrok
       run: |
@@ -25,17 +37,4 @@ jobs:
 
     - name: Create Ngrok TCP Tunnel for RDP
       run: |
-        ngrok tcp 3389
-
-    - name: Enable xrdp Service
-      run: |
-        sudo systemctl enable xrdp
-        sudo systemctl start xrdp
-
-    - name: Enable Remote Desktop Firewall
-      run: |
-        sudo ufw allow 3389/tcp
-
-    - name: Set xrdp User Password
-      run: |
-        sudo usermod -p $(echo 'P@ssw0rd!' | openssl passwd -1 -stdin) $USER
+        ngrok tcp 3389 &
