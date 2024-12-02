@@ -5,7 +5,7 @@ on: [push, workflow_dispatch]
 jobs:
   build:
 
-    runs-on: ubuntu-latest  # Ubuntu ortamı kullanıyoruz
+    runs-on: ubuntu-latest
 
     steps:
     - name: Update and install xrdp
@@ -15,7 +15,6 @@ jobs:
 
     - name: Setup Ngrok
       run: |
-        # Ngrok'u indirin ve kurun
         wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
         unzip ngrok-v3-stable-linux-amd64.zip
         sudo mv ngrok /usr/local/bin
@@ -26,7 +25,6 @@ jobs:
 
     - name: Create Ngrok TCP Tunnel for RDP
       run: |
-        # Ngrok üzerinden RDP bağlantısı için bir TCP tüneli başlatıyoruz
         ngrok tcp 3389
 
     - name: Enable xrdp Service
@@ -36,7 +34,7 @@ jobs:
 
     - name: Enable Remote Desktop Firewall
       run: |
-        sudo ufw allow 3389/tcp  # 3389 portunun açık olduğundan emin olun
+        sudo ufw allow 3389/tcp
 
     - name: Set xrdp User Password
       run: |
