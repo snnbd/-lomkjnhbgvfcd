@@ -54,7 +54,7 @@ jobs:
           echo $NGROK_URL > ngrok_url.txt
 
       - name: Upload Ngrok URL
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: ngrok-url
           path: ngrok_url.txt
