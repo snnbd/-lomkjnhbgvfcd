@@ -1,44 +1,60 @@
-name: CI
+name: Setup Linux Remote Desktop
 
 on: [push, workflow_dispatch]
 
 jobs:
-  build:
+  setup-rdp:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Update and install xrdp
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y xrdp
+      - name: Checkout repository
+        uses: actions/checkout@v2
 
-    - name: Enable xrdp Service
-      run: |
-        sudo systemctl enable xrdp
-        sudo systemctl start xrdp
+      - name: Install desktop environment and xrdp
+        run: |
+          sudo apt update
+          sudo apt install -y xfce4 xfce4-goodies xrdp
+          sudo systemctl enable xrdp
+          sudo systemctl start xrdp
+          echo "xfce4-session" > ~/.xsession
 
-    - name: Enable Remote Desktop Firewall
-      run: |
-        sudo ufw allow 3389/tcp || sudo apt-get install ufw -y && sudo ufw enable && sudo ufw allow 3389/tcp
+      - name: Setup RDP user
+        run: |
+          if id "runneradmin" &>/dev/null; then
+              echo "User runneradmin already exists"
+          else
+              sudo adduser --disabled-password --gecos "" runneradmin
+              echo "runneradmin:P@ssw0rd123" | sudo chpasswd
+              sudo adduser runneradmin sudo
+              sudo mkdir -p /home/runneradmin/.xsession
+              echo "xfce4-session" > /home/runneradmin/.xsession
+              sudo chown runneradmin:runneradmin /home/runneradmin/.xsession
+          fi
 
-    - name: Set xrdp User Password
-      run: |
-        sudo usermod -p $(echo 'P@ssw0rd!' | openssl passwd -1 -stdin) runneradmin
+      - name: Install Ngrok
+        run: |
+          wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip -O ngrok.zip
+          unzip ngrok.zip
+          sudo mv ngrok /usr/local/bin
 
-    - name: Setup Ngrok
-      run: |
-        wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip
-        unzip ngrok-v3-stable-linux-amd64.zip
-        sudo mv ngrok /usr/local/bin
+      - name: Authenticate Ngrok
+        run: ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
 
-    - name: Authenticate Ngrok
-      run: |
-        ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
+      - name: Start Ngrok
+        run: |
+          nohup ngrok tcp 3389 --log=stdout > ngrok.log &
+          sleep 10
+          cat ngrok.log
+          curl --silent --show-error http://127.0.0.1:4040/api/tunnels
 
-    - name: Create Ngrok TCP Tunnel for RDP
-      run: |
-        ngrok tcp 3389 > ngrok.log &
+      - name: Get Ngrok URL
+        run: |
+          NGROK_URL=$(curl --silent --show-error http://127.0.0.1:4040/api/tunnels | grep -o 'tcp://.*.ngrok.io:[0-9]*')
+          echo "Ngrok URL: $NGROK_URL"
+          echo $NGROK_URL > ngrok_url.txt
 
-    - name: Display Ngrok URL
-      run: |
-        tail -f ngrok.log
+      - name: Upload Ngrok URL
+        uses: actions/upload-artifact@v2
+        with:
+          name: ngrok-url
+          path: ngrok_url.txt
