@@ -21,9 +21,9 @@ jobs:
       run: |
         sudo ufw allow 3389/tcp || sudo apt-get install ufw -y && sudo ufw enable && sudo ufw allow 3389/tcp
 
-    - name: Set xrdp User Password
-      run: |
-        sudo usermod -p $(echo 'P@ssw0rd!' | openssl passwd -1 -stdin) $USER
+- name: Set xrdp User Password
+    run: |
+    sudo usermod -p $(echo 'P@ssw0rd!' | openssl passwd -1 -stdin) runneradmin
 
     - name: Setup Ngrok
       run: |
