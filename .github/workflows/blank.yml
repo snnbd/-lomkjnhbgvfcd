@@ -58,3 +58,8 @@ jobs:
         with:
           name: ngrok-url
           path: ngrok_url.txt
+
+      - name: Keep the Action alive for 6 hours
+        run: |
+          echo "Waiting for 6 hours to keep the action alive"
+          sleep 21600  
