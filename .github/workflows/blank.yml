@@ -37,4 +37,8 @@ jobs:
 
     - name: Create Ngrok TCP Tunnel for RDP
       run: |
-        ngrok tcp 3389 &
+        ngrok tcp 3389 > ngrok.log &
+
+    - name: Display Ngrok URL
+      run: |
+        tail -f ngrok.log
