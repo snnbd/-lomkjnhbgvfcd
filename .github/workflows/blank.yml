@@ -1,4 +1,4 @@
-name: Setup Linux SSH
+name: Setup Linux SSH with Key
 
 on: [push, workflow_dispatch]
 
@@ -10,7 +10,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install OpenSSH server
+      - name: Install OpenSSH server and sshpass
         run: |
           sudo apt update
           sudo apt install -y openssh-server sshpass
@@ -55,7 +55,13 @@ jobs:
           name: ngrok-url
           path: ngrok_url.txt
 
+      - name: Add SSH Private Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
       - name: Keep the Action alive for 6 hours
         run: |
           echo "Waiting for 6 hours to keep the action alive"
-          sleep 21500
+          sleep 21600
