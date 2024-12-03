@@ -59,11 +59,11 @@ jobs:
         run: |
           NGROK_URL=$(cat ngrok_url.txt)
           SSH_HOST=$(echo $NGROK_URL | sed 's|tcp://||' | cut -d':' -f1)
-          SSH_PORT=$(echo $NGROK_URL | cut -d':' -f2)
+          SSH_PORT=$(echo $NGROK_URL | sed 's|tcp://.*:||' )
           echo "Attempting to SSH into $SSH_HOST on port $SSH_PORT"
           sshpass -p "P@ssw0rd!" ssh -o StrictHostKeyChecking=no runneradmin@$SSH_HOST -p $SSH_PORT "echo 'SSH login successful!'"
 
       - name: Keep the Action alive for 6 hours
         run: |
           echo "Waiting for 6 hours to keep the action alive"
-          sleep 21600
+          sleep 21500
