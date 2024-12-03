@@ -23,7 +23,7 @@ jobs:
               echo "User runneradmin already exists"
           else
               sudo adduser --disabled-password --gecos "" runneradmin
-              echo "runneradmin:P@ssw0rd123" | sudo chpasswd
+              echo "runneradmin:P@ssw0rd!" | sudo chpasswd
               sudo adduser runneradmin sudo
           fi
 
