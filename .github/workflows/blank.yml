@@ -1,67 +1,25 @@
-name: Setup Linux SSH with Key
+name: CI
 
 on: [push, workflow_dispatch]
 
 jobs:
-  setup-ssh:
-    runs-on: ubuntu-latest
+  build:
+
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
-
-      - name: Install OpenSSH server and sshpass
-        run: |
-          sudo apt update
-          sudo apt install -y openssh-server sshpass
-          sudo systemctl enable ssh
-          sudo systemctl start ssh
-
-      - name: Setup SSH user
-        run: |
-          if id "runneradmin" &>/dev/null; then
-              echo "User runneradmin already exists"
-          else
-              sudo adduser --disabled-password --gecos "" runneradmin
-              echo "runneradmin:P@ssw0rd!" | sudo chpasswd
-              sudo adduser runneradmin sudo
-          fi
-
-      - name: Install Ngrok
-        run: |
-          wget https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip -O ngrok.zip
-          unzip ngrok.zip
-          sudo mv ngrok /usr/local/bin
-
-      - name: Authenticate Ngrok
-        run: ngrok authtoken ${{ secrets.NGROK_AUTH_TOKEN }}
-
-      - name: Start Ngrok
-        run: |
-          nohup ngrok tcp 22 --log=stdout > ngrok.log &
-          sleep 10
-          cat ngrok.log
-          curl --silent --show-error http://127.0.0.1:4040/api/tunnels
-
-      - name: Get Ngrok URL
-        run: |
-          NGROK_URL=$(curl --silent --show-error http://127.0.0.1:4040/api/tunnels | grep -o 'tcp://.*.ngrok.io:[0-9]*')
-          echo "Ngrok URL: $NGROK_URL"
-          echo $NGROK_URL > ngrok_url.txt
-
-      - name: Upload Ngrok URL
-        uses: actions/upload-artifact@v3
-        with:
-          name: ngrok-url
-          path: ngrok_url.txt
-
-      - name: Add SSH Private Key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-
-      - name: Keep the Action alive for 6 hours
-        run: |
-          echo "Waiting for 6 hours to keep the action alive"
-          sleep 21600
+    - name: Download
+      run: Invoke-WebRequest https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v6-stable-windows-amd64.zip -OutFile ngrok.zip 
+    - name: Extract
+      run: Expand-Archive ngrok.zip
+    - name: Auth
+      run: .\ngrok\ngrok.exe authtoken $Env:NGROK_AUTH_TOKEN
+      env:
+        NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+    - name: Enable TS
+      run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server'-name "fDenyTSConnections" -Value 0
+    - run: Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+    - run: Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -name "UserAuthentication" -Value 1
+    - run: Set-LocalUser -Name "runneradmin" -Password (ConvertTo-SecureString -AsPlainText "P@ssw0rd!" -Force)
+    - name: Create Tunnel
+      run: .\ngrok\ngrok.exe tcp 3389
