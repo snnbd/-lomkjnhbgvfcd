@@ -58,7 +58,7 @@ jobs:
       - name: SSH login test using sshpass
         run: |
           NGROK_URL=$(cat ngrok_url.txt)
-          SSH_HOST=$(echo $NGROK_URL | sed 's|tcp://||g' | cut -d':' -f1)
+          SSH_HOST=$(echo $NGROK_URL | sed 's|tcp://||' | cut -d':' -f1)
           SSH_PORT=$(echo $NGROK_URL | cut -d':' -f2)
           echo "Attempting to SSH into $SSH_HOST on port $SSH_PORT"
           sshpass -p "P@ssw0rd!" ssh -o StrictHostKeyChecking=no runneradmin@$SSH_HOST -p $SSH_PORT "echo 'SSH login successful!'"
